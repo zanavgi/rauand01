@@ -106,7 +106,7 @@
         .chat-bubble {
             padding: 10px 14px;
             border-radius: 18px;
-            max-width: 75%;
+            max-width: 80%;
             word-wrap: break-word;
         }
         .ai-bubble {
@@ -121,6 +121,14 @@
         #chat-input-form input {
             background-color: var(--system-gray-2);
             border: 1px solid var(--system-gray-3);
+        }
+        .speak-button {
+            cursor: pointer;
+            color: var(--label-secondary);
+            transition: color 0.2s;
+        }
+        .speak-button:hover {
+            color: var(--system-blue);
         }
     </style>
 </head>
@@ -181,12 +189,10 @@
 
     <script>
         // --- State Management ---
-        const messages = [
-            {
-                sender: 'ai',
-                text: 'سڵاو! من Ai KurdCPTم. چۆن دەتوانم یارمەتیت بدەم؟'
-            }
-        ];
+        const messages = [{
+            sender: 'ai',
+            text: 'سڵاو! من زیرەکی دەستکردی کوردم. چۆن دەتوانم یارمەتیت بدەم؟ پرسیارێکم لێ بکە.'
+        }];
 
         // --- DOM Elements ---
         const tabButtons = document.querySelectorAll('.tab-button');
@@ -196,21 +202,71 @@
         const messageInput = document.getElementById('message-input');
         
         let currentViewId = 'chat-view';
+        let kurdishVoice = null;
+
+        // --- Text-to-Speech (TTS) Logic ---
+        function initializeSpeech() {
+            const voices = window.speechSynthesis.getVoices();
+            // Look for Kurdish voices. 'kmr' is a common code for Kurmanji.
+            // Some systems might have different identifiers.
+            kurdishVoice = voices.find(voice => voice.lang.toLowerCase().startsWith('kmr')) || 
+                           voices.find(voice => voice.name.toLowerCase().includes('kurdish')) || 
+                           null;
+
+            if (!kurdishVoice) {
+                console.warn("No Kurdish (kmr) voice found. TTS may not work as expected.");
+            }
+        }
+
+        function speak(text) {
+            if (!'speechSynthesis' in window) {
+                console.error("Sorry, your browser doesn't support text-to-speech.");
+                return;
+            }
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (kurdishVoice) {
+                utterance.voice = kurdishVoice;
+            } else {
+                // Fallback if no specific Kurdish voice is found
+                utterance.lang = "en-US"; // Use a default if no Kurdish voice is available
+            }
+            utterance.pitch = 1;
+            utterance.rate = 1;
+            window.speechSynthesis.speak(utterance);
+        }
 
         // --- Render Function ---
         function render() {
             messageContainer.innerHTML = '';
             messages.forEach(msg => {
-                const bubble = document.createElement('div');
-                bubble.classList.add('chat-bubble');
-                bubble.textContent = msg.text;
+                const messageWrapper = document.createElement('div');
+                messageWrapper.classList.add('chat-bubble');
 
                 if (msg.sender === 'user') {
-                    bubble.classList.add('user-bubble');
+                    messageWrapper.classList.add('user-bubble');
+                    messageWrapper.textContent = msg.text;
                 } else {
-                    bubble.classList.add('ai-bubble');
+                    messageWrapper.classList.add('ai-bubble');
+                    // For AI messages, create a container for text and button
+                    const aiContentContainer = document.createElement('div');
+                    aiContentContainer.className = 'flex items-center gap-3';
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = msg.text;
+
+                    const speakButton = document.createElement('button');
+                    speakButton.className = 'speak-button flex-shrink-0';
+                    speakButton.dataset.text = msg.text; // Store text for replay
+                    speakButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M5.071 8.043a.75.75 0 01.986-.714l3.943 1.127a.75.75 0 010 1.428L6.057 11.01A.75.75 0 015.07 10.296V8.043zM4 6.5A1.5 1.5 0 015.5 5h1a1.5 1.5 0 011.5 1.5v7A1.5 1.5 0 016.5 15h-1A1.5 1.5 0 014 13.5v-7zM11.5 5.5a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>`;
+                    
+                    aiContentContainer.appendChild(textSpan);
+                    aiContentContainer.appendChild(speakButton);
+                    messageWrapper.appendChild(aiContentContainer);
                 }
-                messageContainer.appendChild(bubble);
+                messageContainer.appendChild(messageWrapper);
             });
             messageContainer.scrollTop = messageContainer.scrollHeight;
         }
@@ -219,30 +275,36 @@
         function handleFormSubmit(event) {
             event.preventDefault();
             const userText = messageInput.value.trim();
-
             if (userText) {
                 messages.push({ sender: 'user', text: userText });
                 render();
                 messageInput.value = '';
-                simulateAiResponse(userText);
+                getAiResponse(userText);
             }
         }
         
-        function simulateAiResponse(userQuery) {
-            // This is a simple simulation, a real AI would analyze the query.
+        function getAiResponse(userQuery) {
+            const query = userQuery.toLowerCase();
+            let aiResponse = "";
+
+            // Simple keyword-based response logic
+            if (query.includes("سڵاو") || query.includes("چۆنی")) {
+                aiResponse = "سڵاو! من باشم، سوپاس. چۆن یارمەتیت بدەم؟";
+            } else if (query.includes("کەش") || query.includes("هەوا")) {
+                aiResponse = "ببوورە، من ناتوانم زانیاری کەش و هەوای ڕاستەوخۆ ببینم. بەڵام دەتوانیت ئەپەکانی کەش و هەوا بەکاربهێنیت.";
+            } else if (query.includes("ناوت چییە") || query.includes("تۆ کێی")) {
+                aiResponse = "من Ai KurdCPTم، یاریدەدەری زیرەکی دەستکردم بۆ وەڵامدانەوەی پرسیارەکانت.";
+            } else if (query.includes("سوپاس")) {
+                aiResponse = "شایەنی نییە! خۆشحاڵم کە توانیم یارمەتیت بدەم.";
+            } else {
+                aiResponse = "ببورە، لەوە تێنەگەیشتم. من هێشتا لە قۆناغی فێربوונدام. دەتوانیت پرسیارێکی تر بکەیت؟";
+            }
+            
             setTimeout(() => {
-                const aiResponses = [
-                    "زۆر باشە، تێگەیشتم.",
-                    "ببوورە، من هێشتا لە قۆناغی فێربوונدام و ناتوانم وەڵامی ئاڵۆز بدەمەوە.",
-                    "پرسیارێکی باشە! با زیاتر لێی بکۆڵینەوە.",
-                    "دەتوانم لە شتێکی تردا یارمەتیت بدەم؟",
-                    "ئەو زانیارییەم لەلا نییە لە ئێستادا."
-                ];
-                const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-                
-                messages.push({ sender: 'ai', text: randomResponse });
+                messages.push({ sender: 'ai', text: aiResponse });
                 render();
-            }, 1000);
+                speak(aiResponse);
+            }, 800);
         }
 
         // --- Navigation Logic ---
@@ -251,7 +313,6 @@
 
             const currentView = document.getElementById(currentViewId);
             const nextView = document.getElementById(viewId);
-
             headerTitle.textContent = title;
             
             if (currentView && nextView) {
@@ -267,15 +328,9 @@
                 }, 350);
             }
             
-            // Update active tab state
             tabButtons.forEach(button => {
-                if (button.dataset.view === viewId) {
-                    button.classList.add('active');
-                    button.classList.remove('text-[var(--label-secondary)]');
-                } else {
-                    button.classList.remove('active');
-                    button.classList.add('text-[var(--label-secondary)]');
-                }
+                button.classList.toggle('active', button.dataset.view === viewId);
+                button.classList.toggle('text-[var(--label-secondary)]', button.dataset.view !== viewId);
             });
         }
 
@@ -288,8 +343,22 @@
         
         chatForm.addEventListener('submit', handleFormSubmit);
 
+        messageContainer.addEventListener('click', function(event) {
+            const button = event.target.closest('.speak-button');
+            if (button && button.dataset.text) {
+                speak(button.dataset.text);
+            }
+        });
+
         // --- Initial Load ---
-        document.addEventListener('DOMContentLoaded', render);
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+            // TTS voices are often loaded asynchronously
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = initializeSpeech;
+            }
+            initializeSpeech(); // Initial call
+        });
     </script>
 
 </body>
