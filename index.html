@@ -58,18 +58,11 @@
             transition: transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
             will-change: transform;
         }
-
+        
         .app-view.hidden {
-            transform: translateX(100%);
-            pointer-events: none;
-            opacity: 0;
+            display: none;
         }
         
-        .app-view:not(.hidden) {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
         /* Slide Animations */
         @keyframes slide-in-right {
             from { transform: translateX(100%); }
@@ -126,7 +119,7 @@
             
             <div id="chat-view" class="app-view flex flex-col h-full">
                 <!-- Message Display Area -->
-                <div id="message-container" class="flex-1 overflow-y-auto p-4 flex flex-col space-y-4">
+                <div id="message-container" class="flex-1 overflow-y-auto p-4 flex flex-col-reverse space-y-4 space-y-reverse">
                     <!-- Messages will be rendered here by JavaScript -->
                 </div>
 
@@ -178,6 +171,7 @@
         // --- SDK Navigation Logic ---
         const tabButtons = document.querySelectorAll('.tab-button');
         const headerTitle = document.getElementById('header-title');
+        const appContent = document.getElementById('app-content');
         let currentViewId = 'chat-view';
 
         function navigateTo(viewId, title) {
@@ -186,32 +180,35 @@
             const currentView = document.getElementById(currentViewId);
             const nextView = document.getElementById(viewId);
 
-            if (headerTitle) {
-                headerTitle.textContent = title;
-            }
+            if (!currentView || !nextView) return;
 
-            if (currentView && nextView) {
-                currentView.classList.add('slide-out-left');
-                nextView.classList.remove('hidden');
-                nextView.classList.add('slide-in-right');
+            headerTitle.textContent = title;
 
-                setTimeout(() => {
-                    currentView.classList.add('hidden');
-                    currentView.classList.remove('slide-out-left');
-                    nextView.classList.remove('slide-in-right');
-                }, 350);
-            }
+            // Determine direction
+            const isNavigatingForward = Array.from(appContent.children).indexOf(nextView) > Array.from(appContent.children).indexOf(currentView);
+
+            // Reset classes
+            currentView.className = 'app-view';
+            nextView.className = 'app-view';
+            
+            // Add animation classes
+            currentView.classList.add('slide-out-left');
+            
+            nextView.classList.remove('hidden');
+            nextView.classList.add('slide-in-right');
+
+            setTimeout(() => {
+                currentView.classList.add('hidden');
+                currentView.classList.remove('slide-out-left');
+                nextView.classList.remove('slide-in-right');
+            }, 350);
             
             currentViewId = viewId;
 
+            // Update tab button states
             tabButtons.forEach(button => {
-                if (button.dataset.view === viewId) {
-                    button.classList.add('active');
-                    button.classList.remove('text-[var(--label-secondary)]');
-                } else {
-                    button.classList.remove('active');
-                    button.classList.add('text-[var(--label-secondary)]');
-                }
+                button.classList.toggle('active', button.dataset.view === viewId);
+                button.classList.toggle('text-[var(--label-secondary)]', button.dataset.view !== viewId);
             });
         }
 
@@ -224,37 +221,36 @@
                 }
             });
         });
-
+        
         // --- App-Specific Logic: Dana AI Chat ---
         const messageContainer = document.getElementById('message-container');
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
         
         // Data Source: Array of message objects
-        const messages = [
-            {
-                sender: 'dana',
-                text: 'سڵاو! من دانام، یاریدەدەری زیرەک. چۆن دەتوانم یارمەتیت بدەم؟'
-            }
-        ];
+        const messages = [];
 
         // Render Function: Renders the messages array to the DOM
         function renderMessages() {
             messageContainer.innerHTML = ''; // Clear existing messages
-            messages.forEach(msg => {
+            const reversedMessages = [...messages].reverse();
+
+            reversedMessages.forEach(msg => {
+                const bubbleWrapper = document.createElement('div');
+                bubbleWrapper.className = `w-full flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`;
+
                 const bubble = document.createElement('div');
                 bubble.textContent = msg.text;
                 
                 let baseClasses = 'p-3 rounded-2xl max-w-[80%] break-words';
                 if (msg.sender === 'user') {
-                    bubble.className = `${baseClasses} bg-[var(--system-blue)] text-white self-end`;
+                    bubble.className = `${baseClasses} bg-[var(--system-blue)] text-white`;
                 } else {
-                    bubble.className = `${baseClasses} bg-[var(--system-gray-2)] text-[var(--label-primary)] self-start`;
+                    bubble.className = `${baseClasses} bg-[var(--system-gray-2)] text-[var(--label-primary)]`;
                 }
-                messageContainer.appendChild(bubble);
+                bubbleWrapper.appendChild(bubble);
+                messageContainer.appendChild(bubbleWrapper);
             });
-            // Auto-scroll to the latest message
-            messageContainer.scrollTop = messageContainer.scrollHeight;
         }
 
         // State Update: Handle form submission
@@ -269,8 +265,12 @@
             getDanaResponse(userInput);
         });
 
-        // Enhanced AI Logic
+        // Enhanced AI Logic with Typing Indicator
         function getDanaResponse(question) {
+             const typingIndicatorWrapper = document.createElement('div');
+             typingIndicatorWrapper.className = 'w-full flex justify-start';
+             typingIndicatorWrapper.id = 'typing-indicator';
+
              const typingIndicator = document.createElement('div');
              typingIndicator.className = 'p-3 rounded-2xl max-w-xs bg-[var(--system-gray-2)] text-[var(--label-primary)] self-start flex items-center space-x-1';
              typingIndicator.innerHTML = `
@@ -278,23 +278,25 @@
                 <span class="block w-2 h-2 bg-[var(--label-secondary)] rounded-full animate-bounce" style="animation-delay: 0s;"></span>
                 <span class="block w-2 h-2 bg-[var(--label-secondary)] rounded-full animate-bounce" style="animation-delay: 0.1s;"></span>
                 <span class="block w-2 h-2 bg-[var(--label-secondary)] rounded-full animate-bounce" style="animation-delay: 0.2s;"></span>`;
-             messageContainer.appendChild(typingIndicator);
-             messageContainer.scrollTop = messageContainer.scrollHeight;
+             typingIndicatorWrapper.appendChild(typingIndicator);
+             messageContainer.prepend(typingIndicatorWrapper);
 
             setTimeout(() => {
-                typingIndicator.remove();
+                document.getElementById('typing-indicator')?.remove();
                 const lowerCaseQuestion = question.toLowerCase().trim();
                 let response = 'ببورە، لە پرسیارەکەت تێنەگەیشتم. دەتوانیت بە شێوازێکی تر پرسیار بکەیت؟'; 
 
                 const knowledgeBase = [
                     { keywords: ['سڵاو', 'چۆنی', 'باشی'], response: 'سڵاو! من باشم، سوپاس. ئامادەم بۆ وەڵامدانەوەی پرسیارەکانت.' },
-                    { keywords: ['ناو', 'تۆ', 'چیە', 'کێیت'], response: 'ناوی من دانایە، یاریدەدەری زیرەک کە لەلایەن زانا فاروقەوە دروستکراوم.' },
+                    { keywords: ['ناوی تۆ چیە', 'تۆ کێیت', 'ناوت چیە'], response: 'ناوی من دانایە، یاریدەدەری زیرەک کە لەلایەن زانا فاروقەوە دروستکراوم.' },
                     { keywords: ['کوردستان'], response: 'کوردستان هەرێمێکی خۆبەڕێوەبەرییە لە باکووری عێراق و خاوەنی سروشتێکی جوان و مێژوویەکی دەوڵەمەندە.' },
                     { keywords: ['پایتەخت', 'هەولێر'], response: 'پایتەختی هەرێمی کوردستان شاری هەولێرە، کە بە قەڵا دێرینەکەی ناسراوە.' },
-                    { keywords: ['زانا فاروق', 'دروستکەر', 'zana faruq'], response: 'زانا فاروق گەشەپێدەر و دروستکەری منە. ئەو پسپۆڕە لە بواری زیرەکیی دەستکرد و دیزاینی ئەپلیکەیشن.' },
+                    { keywords: ['زانا فاروق', 'دروستکەر', 'zana faruq', 'گەشەپێدەر'], response: 'زانا فاروق گەشەپێدەر و دروستکەری منە. ئەو پسپۆڕە لە بواری زیرەکیی دەستکرد و دیزاینی ئەپلیکەیشن.' },
                     { keywords: ['کەش و هەوا', 'پلەی گەرما'], response: 'ناتوانم زانیاری کەش و هەوای ڕاستەوخۆت پێ بدەم، بەڵام دەتوانیت ئەپەکانی کەش و هەوا بەکاربهێنیت بۆ نوێترین زانیاری.' },
-                    { keywords: ['سوپاس'], response: 'شایەنی نییە! خۆشحاڵم کە توانیم یارمەتیت بدەم.' },
-                    { keywords: ['قەڵای هەولێر', 'قەلا'], response: 'قەڵای هەولێر یەکێکە لە کۆنترین شوێنەوارە مێژووییەکانی جیهان و لە لیستی میراتی جیھانیی یوونێسکۆدایە.' }
+                    { keywords: ['چی دەکەیت', 'کار'], response: 'من دەتوانم وەڵامی پرسیارەکانت بدەمەوە، زانیاری گشتیت پێشکەش بکەم، و یارمەتیت بدەم لە کاری ڕۆژانەدا.'},
+                    { keywords: ['سوپاس', 'دەست خۆش'], response: 'شایەنی نییە! خۆشحاڵم کە توانیم یارمەتیت بدەم.' },
+                    { keywords: ['قەڵای هەولێر', 'قەلا'], response: 'قەڵای هەولێر یەکێکە لە کۆنترین شوێنەوارە مێژووییەکانی جیهان و لە لیستی میراتی جیھانیی یوونێسکۆدایە.' },
+                    { keywords: ['خۆشەویستی'], response: 'خۆشەویستی هەستێکی ئاڵۆز و جوانە. وەک زیرەکییەکی دەستکرد، من ناتوانم هەستی پێبکەم، بەڵام دەتوانم لەسەری بدوێم و شیعرتی بۆ بدۆزمەوە.'}
                 ];
 
                 for (const item of knowledgeBase) {
@@ -310,8 +312,16 @@
             }, 1200);
         }
 
-        // Initial Render
-        renderMessages();
+        // Initial welcome message
+        function initializeChat() {
+            messages.push({
+                sender: 'dana',
+                text: 'سڵاو! من دانام، یاریدەدەری زیرەک. چۆن دەتوانم یارمەتیت بدەم؟'
+            });
+            renderMessages();
+        }
+        
+        initializeChat();
     </script>
 </body>
 </html>
