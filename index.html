@@ -54,16 +54,25 @@
             transition: transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
             will-change: transform;
             overflow-y: auto;
-            padding-bottom: 5rem; /* Space for tab bar */
+            /* Padding for header and tab bar */
+            padding-top: 0.1px; /* Prevents margin collapse */
+            padding-bottom: 5rem; 
         }
         
         .app-view.hidden { display: none; }
 
+        /* Forward navigation */
         @keyframes slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
-        @keyframes slide-out-left { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+        @keyframes slide-out-left { from { transform: translateX(0); } to { transform: translateX(-30%); } }
+        .slide-in-right { animation: slide-in-right 0.35s cubic-bezier(0.4, 0.0, 0.2, 1); }
+        .slide-out-left { animation: slide-out-left 0.35s cubic-bezier(0.4, 0.0, 0.2, 1); }
         
-        .slide-in-right { animation: slide-in-right 0.35s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; }
-        .slide-out-left { animation: slide-out-left 0.35s cubic-bezier(0.4, 0.0, 0.2, 1) forwards; }
+        /* Backward navigation */
+        @keyframes slide-in-left { from { transform: translateX(-30%); } to { transform: translateX(0); } }
+        @keyframes slide-out-right { from { transform: translateX(0); } to { transform: translateX(100%); } }
+        .slide-in-left { animation: slide-in-left 0.35s cubic-bezier(0.4, 0.0, 0.2, 1); }
+        .slide-out-right { animation: slide-out-right 0.35s cubic-bezier(0.4, 0.0, 0.2, 1); }
+
 
         .tab-button.active { color: var(--system-blue); }
 
@@ -85,15 +94,40 @@
         .list-inset-grouped li:last-child { border-bottom: none; }
         .list-inset-grouped li:active { background-color: var(--system-gray-4); }
         .chevron { color: var(--label-tertiary); }
+
+        /* Chat styles */
+        .chat-bubble {
+            max-width: 75%;
+            padding: 0.5rem 0.75rem;
+            border-radius: 1.125rem;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+        }
+        .chat-bubble.user {
+            background-color: var(--system-blue);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 0.25rem;
+        }
+        .chat-bubble.ai {
+            background-color: var(--system-gray-2);
+            border: 1px solid var(--system-gray-3);
+            color: var(--label-primary);
+            margin-right: auto;
+            border-bottom-left-radius: 0.25rem;
+        }
     </style>
 </head>
 <body class="flex justify-center items-center bg-black">
 
     <div id="app-container" class="w-full max-w-md h-full flex flex-col bg-[var(--system-gray-1)] shadow-2xl overflow-hidden">
         
-        <header id="app-header" class="relative flex items-center justify-center p-3 bg-[var(--system-gray-1)]/80 backdrop-blur-xl border-b border-[var(--system-gray-3)] flex-shrink-0 z-10">
-            <button id="back-button" class="hidden absolute left-4 text-[var(--system-blue)] text-lg">&lt; دواوە</button>
-            <h1 id="header-title" class="text-lg font-semibold text-center mx-auto">پۆلەکان</h1>
+        <header id="app-header" class="relative flex items-center justify-between p-3 bg-[var(--system-gray-1)]/80 backdrop-blur-xl border-b border-[var(--system-gray-3)] flex-shrink-0 z-10">
+            <button id="back-button" class="hidden text-[var(--system-blue)] text-lg px-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                <span class="ml-1">دواوە</span>
+            </button>
+            <h1 id="header-title" class="absolute left-1/2 -translate-x-1/2 text-lg font-semibold">پۆلەکان</h1>
         </header>
 
         <main id="app-content" class="flex-1 relative">
@@ -112,31 +146,27 @@
             </div>
 
             <div id="lesson-view" class="app-view hidden p-4">
-                 <div class="bg-[var(--system-gray-2)] p-6 rounded-lg">
+                 <div class="bg-[var(--system-gray-2)] p-6 rounded-xl shadow-sm">
                     <h2 id="lesson-title" class="text-2xl font-bold mb-4"></h2>
                     <p id="lesson-content" class="text-[var(--label-secondary)] mb-6"></p>
-                    <button class="w-full bg-[var(--system-blue)] text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 017 8a1 1 0 10-2 0 7.001 7.001 0 006 6.93V17H9a1 1 0 100 2h2a1 1 0 100-2h-1v-2.07z" clip-rule="evenodd" /></svg>
+                    <button id="ask-ai-button" class="w-full bg-[var(--system-blue)] text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 active:opacity-80">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                         <span>پرسیار لە Ai KurdCPT بکە</span>
                     </button>
                 </div>
             </div>
 
-            <div id="ai-view" class="app-view hidden p-4 flex flex-col h-full">
-                <div class="flex-1 flex flex-col items-center justify-center text-center">
-                    <div class="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center mb-4">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                    </div>
-                    <h2 class="text-2xl font-bold">Ai KurdCPT</h2>
-                    <p class="text-[var(--label-secondary)] mt-2">لەلایەن Rawand AI دروستکراوە. <br> چۆن دەتوانم یارمەتیت بدەم؟</p>
+            <div id="ai-view" class="app-view hidden flex flex-col h-full">
+                <div id="chat-messages" class="flex-1 p-4 space-y-2 overflow-y-auto">
+                    <!-- Chat messages will be injected here -->
                 </div>
-                <div class="mt-auto p-2 bg-[var(--system-gray-1)]">
-                    <div class="flex items-center bg-[var(--system-gray-2)] border border-[var(--system-gray-3)] rounded-full p-1">
-                        <input type="text" placeholder="پرسیارەکەت بنووسە..." class="w-full bg-transparent px-3 py-2 focus:outline-none">
-                        <button class="bg-[var(--system-blue)] text-white rounded-full p-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                <div class="mt-auto p-2 bg-[var(--system-gray-1)] border-t border-[var(--system-gray-3)]">
+                    <form id="chat-form" class="flex items-center bg-[var(--system-gray-2)] border border-[var(--system-gray-3)] rounded-full p-1">
+                        <input id="chat-input" type="text" placeholder="پرسیارەکەت بنووسە..." class="w-full bg-transparent px-3 py-2 focus:outline-none text-[var(--label-primary)]">
+                        <button id="send-button" type="submit" class="bg-[var(--system-blue)] text-white rounded-full p-2.5 flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
                         </button>
-                    </div>
+                    </form>
                 </div>
             </div>
 
@@ -155,21 +185,21 @@
                         <span class="text-[var(--label-secondary)]">Rawand AI</span>
                     </li>
                 </ul>
-                <p class="text-center text-[var(--label-secondary)] mt-4 px-4">ئەم پلاتفۆرمە دیجیتاڵییە بۆ یارمەتیدانی قوتابیان دروستکراوە بۆ تێگەیشتن لە وانەکانیان بە شێوازێکی مۆدێرن و زیرەک.</p>
+                <p class="text-center text-[var(--label-secondary)] mt-4 px-4 text-sm">ئەم پلاتفۆرمە دیجیتاڵییە بۆ یارمەتیدانی قوتابیان دروستکراوە بۆ تێگەیشتن لە وانەکانیان بە شێوازێکی مۆدێرن و زیرەک.</p>
             </div>
             
         </main>
 
-        <nav id="app-tab-bar" class="flex justify-around items-center py-2 bg-[var(--system-gray-1)]/80 backdrop-blur-xl border-t border-[var(--system-gray-3)] flex-shrink-0">
-             <button data-view="polakan-view" data-title="پۆلەکان" class="tab-button active flex flex-col items-center p-2 transition-colors w-20">
+        <nav id="app-tab-bar" class="flex justify-around items-center py-1 bg-[var(--system-gray-1)]/80 backdrop-blur-xl border-t border-[var(--system-gray-3)] flex-shrink-0">
+             <button data-view="polakan-view" data-title="پۆلەکان" class="tab-button active flex flex-col items-center justify-center p-2 transition-colors w-24 h-14">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v11.494m-9-5.747h18" /></svg>
                 <span class="text-xs mt-1">پۆلەکان</span>
             </button>
-            <button data-view="ai-view" data-title="Ai KurdCPT" class="tab-button flex flex-col items-center text-[var(--label-secondary)] p-2 transition-colors w-20">
+            <button data-view="ai-view" data-title="Ai KurdCPT" class="tab-button flex flex-col items-center justify-center text-[var(--label-secondary)] p-2 transition-colors w-24 h-14">
                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                 <span class="text-xs mt-1">AI KurdCPT</span>
             </button>
-            <button data-view="darbara-view" data-title="دەربارە" class="tab-button flex flex-col items-center text-[var(--label-secondary)] p-2 transition-colors w-20">
+            <button data-view="darbara-view" data-title="دەربارە" class="tab-button flex flex-col items-center justify-center text-[var(--label-secondary)] p-2 transition-colors w-24 h-14">
                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span class="text-xs mt-1">دەربارە</span>
             </button>
@@ -184,6 +214,10 @@
         const subjectsList = document.getElementById('subjects-list');
         const lessonTitle = document.getElementById('lesson-title');
         const lessonContent = document.getElementById('lesson-content');
+        const askAiButton = document.getElementById('ask-ai-button');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
 
         let navigationStack = [{ viewId: 'polakan-view', title: 'پۆلەکان' }];
         
@@ -195,83 +229,74 @@
             5: ["کوردی", "بیرکاری", "زانست", "ئینگلیزی", "عەرەبی", "کۆمەڵایەتی وەرزی یەک", "کۆمەڵایەتی وەرزی دوو", "ئاین", "هونەر", "وەرزش"],
             6: ["کوردی", "بیرکاری", "زانست", "ئینگلیزی", "عەرەبی", "کۆمەڵایەتی وەرزی یەک", "کۆمەڵایەتی وەرزی دوو", "ئاین", "هونەر", "وەرزش"],
         };
-
-        function updateUI(viewId, title) {
-            document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
-            document.getElementById(viewId).classList.remove('hidden');
+        
+        function updateHeader(title) {
             headerTitle.textContent = title;
             backButton.classList.toggle('hidden', navigationStack.length <= 1);
+        }
 
-            tabButtons.forEach(button => {
-                const isTabView = ['polakan-view', 'ai-view', 'darbara-view'].includes(viewId);
-                if (isTabView && button.dataset.view === viewId) {
-                    button.classList.add('active');
-                    button.classList.remove('text-[var(--label-secondary)]');
-                } else {
-                    button.classList.remove('active');
-                    button.classList.add('text-[var(--label-secondary)]');
-                }
+        function updateActiveTab(viewId) {
+             tabButtons.forEach(button => {
+                const isCurrentTab = button.dataset.view === viewId;
+                button.classList.toggle('active', isCurrentTab);
+                button.classList.toggle('text-[var(--label-secondary)]', !isCurrentTab);
             });
+        }
+        
+        function performNavigation(currentView, nextView, isForward) {
+            if (isForward) {
+                currentView.classList.add('slide-out-left');
+                nextView.classList.remove('hidden');
+                nextView.classList.add('slide-in-right');
+            } else { // isBackward
+                currentView.classList.add('slide-out-right');
+                nextView.classList.remove('hidden');
+                nextView.classList.add('slide-in-left');
+            }
+
+            setTimeout(() => {
+                currentView.classList.add('hidden');
+                currentView.className = 'app-view hidden'; // Clean up all animation classes
+                nextView.className = 'app-view'; // Clean up all animation classes
+            }, 350);
         }
 
         function navigateTo(viewId, title, context = {}) {
-            const currentViewId = navigationStack[navigationStack.length - 1].viewId;
-            const currentView = document.getElementById(currentViewId);
-            const nextView = document.getElementById(viewId);
-
-            if (viewId === currentViewId) return;
+            if (navigationStack.length > 0) {
+                 const currentViewId = navigationStack[navigationStack.length - 1].viewId;
+                 if (viewId === currentViewId) return;
+                 const currentView = document.getElementById(currentViewId);
+                 const nextView = document.getElementById(viewId);
+                 
+                 navigationStack.push({ viewId, title, context });
+                 performNavigation(currentView, nextView, true);
+            } else {
+                 document.getElementById(viewId).classList.remove('hidden');
+                 navigationStack.push({ viewId, title, context });
+            }
 
             if(context.grade) renderSubjects(context.grade);
             if(context.subject) renderLesson(context.subject);
 
-            navigationStack.push({ viewId, title, context });
-            
-            currentView.classList.add('slide-out-left');
-            nextView.classList.remove('hidden');
-            nextView.classList.add('slide-in-right');
-
-            setTimeout(() => {
-                currentView.classList.add('hidden');
-                currentView.classList.remove('slide-out-left');
-                nextView.classList.remove('slide-in-right');
-            }, 350);
-
-            updateUI(viewId, title);
+            updateHeader(title);
+            updateActiveTab(null); // Deselect all tabs for sub-views
         }
 
         backButton.addEventListener('click', () => {
             if (navigationStack.length > 1) {
-                const currentViewId = navigationStack.pop().viewId;
-                const prevState = navigationStack[navigationStack.length - 1];
+                const currentViewState = navigationStack.pop();
+                const previousViewState = navigationStack[navigationStack.length - 1];
                 
-                const currentView = document.getElementById(currentViewId);
-                const prevView = document.getElementById(prevState.viewId);
+                const currentView = document.getElementById(currentViewState.viewId);
+                const previousView = document.getElementById(previousViewState.viewId);
 
-                prevView.classList.remove('hidden');
-                currentView.classList.add('slide-in-right'); // reverse animation
-                prevView.classList.add('slide-out-left'); // reverse animation
+                performNavigation(currentView, previousView, false);
+                updateHeader(previousViewState.title);
                 
-                // Animate back
-                currentView.style.transform = 'translateX(100%)';
-                prevView.style.transform = 'translateX(-100%)';
-                requestAnimationFrame(() => {
-                    currentView.style.transition = 'transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1)';
-                    prevView.style.transition = 'transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1)';
-                    currentView.style.transform = 'translateX(100%)';
-                    prevView.style.transform = 'translateX(0)';
-                });
-
-
-                setTimeout(() => {
-                    currentView.classList.add('hidden');
-                    currentView.style.transition = '';
-                    currentView.style.transform = '';
-                    prevView.style.transition = '';
-                    prevView.style.transform = '';
-                    prevView.classList.remove('slide-out-left');
-                }, 350);
-
-                updateUI(prevState.viewId, prevState.title);
+                const isTabView = ['polakan-view', 'ai-view', 'darbara-view'].includes(previousViewState.viewId);
+                if (isTabView) {
+                    updateActiveTab(previousViewState.viewId);
+                }
             }
         });
 
@@ -279,11 +304,22 @@
             button.addEventListener('click', () => {
                 const viewId = button.dataset.view;
                 const title = button.dataset.title;
-                if (viewId) {
+                const currentViewId = navigationStack[navigationStack.length - 1].viewId;
+
+                if (viewId && viewId !== currentViewId) {
+                    document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+                    document.getElementById(viewId).classList.remove('hidden');
+                    
                     navigationStack = [{ viewId, title }]; // Reset stack for tab navigation
-                    updateUI(viewId, title);
+                    updateHeader(title);
+                    updateActiveTab(viewId);
                 }
             });
+        });
+        
+        askAiButton.addEventListener('click', () => {
+            const lessonName = lessonTitle.textContent;
+            navigateTo('ai-view', 'Ai KurdCPT', { fromLesson: lessonName });
         });
 
         function renderGrades() {
@@ -311,10 +347,56 @@
             lessonTitle.textContent = `وانەی ${subject}`;
             lessonContent.textContent = `لێرەدا ڕوونکردنەوەی وانەی ${subject} پیشان دەدرێت. زیرەکی دەستکردی Ai KurdCPT یارمەتیت دەدات بۆ تێگەیشتنی باشتر لە وانەکە.`;
         }
+        
+        // --- Chat Functionality ---
+        function addChatMessage(message, sender) {
+            const bubble = document.createElement('div');
+            bubble.classList.add('chat-bubble', sender);
+            bubble.textContent = message;
+            chatMessages.appendChild(bubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // Auto-scroll
+        }
+        
+        function getAiResponse(userMessage) {
+            const lowerMessage = userMessage.toLowerCase();
+            if (lowerMessage.includes("سڵاو")) {
+                return "سڵاو! چۆن دەتوانم یارمەتیت بدەم ئەمڕۆ؟";
+            } else if (lowerMessage.includes("بیرکاری")) {
+                return "بێگومان، چ بابەتێکی بیرکاریت مەبەستە؟ کۆکردنەوە، لێدەرکردن، یان شتێکی تر؟";
+            } else if (lowerMessage.includes("زانست")) {
+                 return "بابەتی زانست زۆر فراوانە. دەتوانیت دیاری بکەیت کام بەشی زانستت دەوێت؟ بۆ نموونە، گەردوون، گیانەوەران، یان وزە؟";
+            } else {
+                 return "ببورە، من هێشتا لە قۆناغی فێرکردندام و ناتوانم وەڵامی پرسیارە ئاڵۆزەکان بدەمەوە. تکایە پرسیارێکی سادەتر بکە.";
+            }
+        }
 
-        // Initial Load
-        renderGrades();
-        updateUI('polakan-view', 'پۆلەکان');
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const userMessage = chatInput.value.trim();
+            if (userMessage) {
+                addChatMessage(userMessage, 'user');
+                chatInput.value = '';
+                
+                // Simulate AI thinking
+                setTimeout(() => {
+                    const aiMessage = getAiResponse(userMessage);
+                    addChatMessage(aiMessage, 'ai');
+                }, 1000);
+            }
+        });
+
+
+        // --- Initial Load ---
+        function initialize() {
+            renderGrades();
+            const initialView = navigationStack[0];
+            updateHeader(initialView.title);
+            updateActiveTab(initialView.viewId);
+            document.getElementById(initialView.viewId).classList.remove('hidden');
+        }
+
+        initialize();
+
     </script>
 </body>
 </html>
