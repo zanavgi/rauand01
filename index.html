@@ -57,7 +57,6 @@
             height: 100%;
             transition: transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
             will-change: transform;
-            /* No default padding to allow full-height chat */
         }
 
         .app-view.hidden {
@@ -88,11 +87,9 @@
             animation: slide-out-left 0.35s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
         }
 
-        .tab-button.active svg {
-            color: var(--system-blue);
-        }
+        .tab-button.active svg,
         .tab-button.active span {
-             color: var(--system-blue);
+            color: var(--system-blue);
         }
 
         /* Inset Grouped List Style */
@@ -129,7 +126,7 @@
             
             <div id="chat-view" class="app-view flex flex-col h-full">
                 <!-- Message Display Area -->
-                <div id="message-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+                <div id="message-container" class="flex-1 overflow-y-auto p-4 flex flex-col space-y-4">
                     <!-- Messages will be rendered here by JavaScript -->
                 </div>
 
@@ -169,7 +166,7 @@
             </button>
             <button data-view="settings-view" data-title="ڕێکخستنەکان" class="tab-button flex flex-col items-center text-[var(--label-secondary)] p-2 transition-colors w-20">
                  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0 3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0 3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826 3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span class="text-xs mt-1">ڕێکخستنەکان</span>
@@ -194,7 +191,6 @@
             }
 
             if (currentView && nextView) {
-                // Determine animation direction (not needed for this simple 2-tab app, but good practice)
                 currentView.classList.add('slide-out-left');
                 nextView.classList.remove('hidden');
                 nextView.classList.add('slide-in-right');
@@ -238,7 +234,7 @@
         const messages = [
             {
                 sender: 'dana',
-                text: 'سڵاو! من دانام، یاریدەدەری زیرەک لەلایەن گوگڵەوە. چۆن دەتوانم یارمەتیت بدەم؟'
+                text: 'سڵاو! من دانام، یاریدەدەری زیرەک. چۆن دەتوانم یارمەتیت بدەم؟'
             }
         ];
 
@@ -253,7 +249,7 @@
                 if (msg.sender === 'user') {
                     bubble.className = `${baseClasses} bg-[var(--system-blue)] text-white self-end`;
                 } else {
-                    bubble.className = `${baseClasses} bg-[var(--system-gray-4)] text-[var(--label-primary)] self-start`;
+                    bubble.className = `${baseClasses} bg-[var(--system-gray-2)] text-[var(--label-primary)] self-start`;
                 }
                 messageContainer.appendChild(bubble);
             });
@@ -267,57 +263,51 @@
             const userInput = messageInput.value.trim();
             if (userInput === '') return;
 
-            // 1. Update data array with user message
             messages.push({ sender: 'user', text: userInput });
-            
-            // 2. Re-render the UI
             renderMessages();
-            
-            // 3. Clear the input
             messageInput.value = '';
-
-            // 4. Simulate AI response
             getDanaResponse(userInput);
         });
 
-        // Simulate AI Logic
+        // Enhanced AI Logic
         function getDanaResponse(question) {
-             // Add a typing indicator
-            const typingIndicator = document.createElement('div');
-            typingIndicator.className = 'p-3 rounded-2xl max-w-xs bg-[var(--system-gray-4)] text-[var(--label-primary)] self-start flex items-center space-x-1';
-            typingIndicator.innerHTML = `
+             const typingIndicator = document.createElement('div');
+             typingIndicator.className = 'p-3 rounded-2xl max-w-xs bg-[var(--system-gray-2)] text-[var(--label-primary)] self-start flex items-center space-x-1';
+             typingIndicator.innerHTML = `
+                <style> @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } } .animate-bounce { animation: bounce 1s infinite; } </style>
                 <span class="block w-2 h-2 bg-[var(--label-secondary)] rounded-full animate-bounce" style="animation-delay: 0s;"></span>
                 <span class="block w-2 h-2 bg-[var(--label-secondary)] rounded-full animate-bounce" style="animation-delay: 0.1s;"></span>
                 <span class="block w-2 h-2 bg-[var(--label-secondary)] rounded-full animate-bounce" style="animation-delay: 0.2s;"></span>`;
-            messageContainer.appendChild(typingIndicator);
-            messageContainer.scrollTop = messageContainer.scrollHeight;
-
+             messageContainer.appendChild(typingIndicator);
+             messageContainer.scrollTop = messageContainer.scrollHeight;
 
             setTimeout(() => {
-                // Remove typing indicator
                 typingIndicator.remove();
+                const lowerCaseQuestion = question.toLowerCase().trim();
+                let response = 'ببورە، لە پرسیارەکەت تێنەگەیشتم. دەتوانیت بە شێوازێکی تر پرسیار بکەیت؟'; 
 
-                let response = 'ببورە، لە پرسیارەکەت تێنەگەیشتم. دەتوانیت بە شێوازێکی تر پرسیار بکەیت؟'; // Default response
-                
-                const lowerCaseQuestion = question.toLowerCase();
+                const knowledgeBase = [
+                    { keywords: ['سڵاو', 'چۆنی', 'باشی'], response: 'سڵاو! من باشم، سوپاس. ئامادەم بۆ وەڵامدانەوەی پرسیارەکانت.' },
+                    { keywords: ['ناو', 'تۆ', 'چیە', 'کێیت'], response: 'ناوی من دانایە، یاریدەدەری زیرەک کە لەلایەن زانا فاروقەوە دروستکراوم.' },
+                    { keywords: ['کوردستان'], response: 'کوردستان هەرێمێکی خۆبەڕێوەبەرییە لە باکووری عێراق و خاوەنی سروشتێکی جوان و مێژوویەکی دەوڵەمەندە.' },
+                    { keywords: ['پایتەخت', 'هەولێر'], response: 'پایتەختی هەرێمی کوردستان شاری هەولێرە، کە بە قەڵا دێرینەکەی ناسراوە.' },
+                    { keywords: ['زانا فاروق', 'دروستکەر', 'zana faruq'], response: 'زانا فاروق گەشەپێدەر و دروستکەری منە. ئەو پسپۆڕە لە بواری زیرەکیی دەستکرد و دیزاینی ئەپلیکەیشن.' },
+                    { keywords: ['کەش و هەوا', 'پلەی گەرما'], response: 'ناتوانم زانیاری کەش و هەوای ڕاستەوخۆت پێ بدەم، بەڵام دەتوانیت ئەپەکانی کەش و هەوا بەکاربهێنیت بۆ نوێترین زانیاری.' },
+                    { keywords: ['سوپاس'], response: 'شایەنی نییە! خۆشحاڵم کە توانیم یارمەتیت بدەم.' },
+                    { keywords: ['قەڵای هەولێر', 'قەلا'], response: 'قەڵای هەولێر یەکێکە لە کۆنترین شوێنەوارە مێژووییەکانی جیهان و لە لیستی میراتی جیھانیی یوونێسکۆدایە.' }
+                ];
 
-                if (lowerCaseQuestion.includes('سڵاو') || lowerCaseQuestion.includes('چۆنی')) {
-                    response = 'سڵاو! من باشم، سوپاس. ئامادەم بۆ وەڵامدانەوەی پرسیارەکانت.';
-                } else if (lowerCaseQuestion.includes('ناو') && (lowerCaseQuestion.includes('تۆ') || lowerCaseQuestion.includes('چیە'))) {
-                    response = 'ناوی من دانایە، یاریدەدەری زیرەکی گوگڵ.';
-                } else if (lowerCaseQuestion.includes('کوردستان')) {
-                    response = 'کوردستان هەرێمێکی خۆبەڕێوەبەرییە لە باکووری عێراق و خاوەنی سروشتێکی جوان و مێژوویەکی دەوڵەمەندە.';
-                } else if (lowerCaseQuestion.includes('پایتەخت')) {
-                     response = 'پایتەختی هەرێمی کوردستان شاری هەولێرە.';
+                for (const item of knowledgeBase) {
+                    if (item.keywords.some(keyword => lowerCaseQuestion.includes(keyword))) {
+                        response = item.response;
+                        break;
+                    }
                 }
 
-                // 1. Update data array with AI response
                 messages.push({ sender: 'dana', text: response });
-                
-                // 2. Re-render the UI
                 renderMessages();
 
-            }, 1200); // Simulate network delay and "thinking"
+            }, 1200);
         }
 
         // Initial Render
